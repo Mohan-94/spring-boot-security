@@ -5,22 +5,27 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+    @Bean
+    public InMemoryUserDetailsManager userDetailsService() {
+        UserDetails admin = User.withUsername("admin")
+                .password("admin")
+                .roles("ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(admin);
+    }
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // Set your configuration on the auth object
-        auth.inMemoryAuthentication()
-                .withUser("blah")
-                .password("blah")
-                .roles("USER")
-                .and()
-                .withUser("foo")
-                .password("foo")
-                .roles("ADMIN");
+        auth.userDetailsService(userDetailsService());
     }
 
     @Bean
@@ -33,7 +38,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.authorizeRequests()
                 .antMatchers("/admin").hasRole("ADMIN")
                 .antMatchers("/user").hasAnyRole("ADMIN", "USER")
-                .antMatchers("/").permitAll()
+                .antMatchers("/register", "/").permitAll()
                 .and().formLogin();
     }
 }
+
